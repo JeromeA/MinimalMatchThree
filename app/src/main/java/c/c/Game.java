@@ -7,7 +7,6 @@ import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioTrack;
 import android.os.Handler;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -17,7 +16,7 @@ import java.util.Set;
 
 class Game extends View {
 
-  private static final Random random = new Random(0);
+  private static final Random random = new Random();
   private static final int WIDTH = 8;
   private static final int HEIGHT = 5;
   private static final int SIZE = WIDTH * HEIGHT;
@@ -30,8 +29,8 @@ class Game extends View {
   private int leftMargin;
   private int topMargin;
   private int startPosition;
-  private Handler handler;
-  private AudioTrack audioTrack;
+  private final Handler handler;
+  private final AudioTrack audioTrack;
 
   public Game(Context context) {
     super(context);
@@ -67,7 +66,6 @@ class Game extends View {
   }
 
   private static boolean markExploded(int[] candies, boolean[] exploded) {
-    Log.i("X", "markExploded start");
     boolean hasExploded = false;
     for (int i = 0; i < SIZE; i++) {
       int x = i % WIDTH;
@@ -92,13 +90,11 @@ class Game extends View {
     for (int i = 0; i < SIZE; i++) {
       if (exploded[i]) res.add(i);
     }
-    Log.i("X", "markExploded Marked: " + res.toString());
 
     return hasExploded;
   }
 
   private void removeExploded() {
-    Log.i("X", "removeExploded");
     for (int i = 0; i < SIZE; i++) {
       if (exploded[i]) {
         exploded[i] = false;
@@ -108,7 +104,6 @@ class Game extends View {
   }
 
   private void fall() {
-    Log.i("X", "fall");
     boolean falling = true;
     while (falling) {
       falling = false;
@@ -165,7 +160,6 @@ class Game extends View {
           if (isValid(startPosition, touchPosition)) {
             swap(candies, startPosition, touchPosition);
             invalidate();
-            Log.i("X", "onTouchEvent: posting call to explode");
             handler.postDelayed(this::explode, 100);
             // Make all subsequent events invalid.
             startPosition = -1;
@@ -186,7 +180,6 @@ class Game extends View {
   }
 
   private void explode() {
-    Log.i("X", "explode");
     if (markExploded(candies, exploded)) {
       invalidate();
       play();
