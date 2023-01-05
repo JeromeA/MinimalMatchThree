@@ -1,0 +1,13 @@
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Intellij project files
+.idea
+
+# Android Studio Files
+*.iml
+.gradle/
+build/
+app/build
+
+small_build/
