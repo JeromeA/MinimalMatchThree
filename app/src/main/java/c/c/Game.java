@@ -21,7 +21,7 @@ class Game extends View {
   private static final int HEIGHT = 5;
   private static final int SIZE = WIDTH * HEIGHT;
 
-  private final Drawable[] candy;
+  private final Drawable[] items;
   private final Drawable explosion;
   private final int[] candies;
   private final boolean[] exploded;
@@ -35,7 +35,7 @@ class Game extends View {
   public Game(Context context) {
     super(context);
     handler = new Handler();
-    candy = new Drawable[] {
+    items = new Drawable[] {
         getResources().getDrawable(R.drawable.b, null),
         getResources().getDrawable(R.drawable.g, null),
         getResources().getDrawable(R.drawable.o, null),
@@ -53,6 +53,7 @@ class Game extends View {
             .setSampleRate(8000)
             .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
             .build())
+        .setTransferMode(AudioTrack.MODE_STATIC)
         .setBufferSizeInBytes(8000)
         .build();
     explosion = getResources().getDrawable(R.drawable.e, null);
@@ -117,7 +118,7 @@ class Game extends View {
     }
 
     for (int i = 0; i < candies.length ; i++) {
-      if (candies[i] == 0) candies[i] = random.nextInt(candy.length) + 1;
+      if (candies[i] == 0) candies[i] = random.nextInt(items.length) + 1;
     }
   }
 
@@ -133,7 +134,7 @@ class Game extends View {
       if (v == 0) continue;
       int x = i % WIDTH;
       int y = i / WIDTH;
-      Drawable drawable = candy[v - 1];
+      Drawable drawable = items[v - 1];
       drawable.setBounds(leftMargin + cellSize * x, topMargin + cellSize * y, leftMargin + cellSize * (x+1), topMargin + cellSize * (y + 1));
       drawable.draw(canvas);
       if (exploded[i]) {
@@ -182,7 +183,7 @@ class Game extends View {
   private void explode() {
     if (markExploded(candies, exploded)) {
       invalidate();
-      play();
+      playBeep();
       handler.postDelayed(() -> { removeExploded();invalidate(); }, 500);
       handler.postDelayed(() -> { fall();invalidate(); }, 1000);
       handler.postDelayed(this::explode, 1500);
@@ -195,12 +196,19 @@ class Game extends View {
     array[index2] = tmp;
   }
 
-  private void play() {
-    short[] buf = new short[4000];
-    for (int i = 0 ; i < 4000 ; i++) {
-      buf[i] = (short) (Math.sin(440 * i * 6.28 / 8000.0) * 20000);
+  private void playBeep() {
+    if (audioTrack.getPlayState() == AudioTrack.PLAYSTATE_PLAYING) {
+      audioTrack.stop();
+    } else {
+      short[] buf = new short[4000];
+      for (int i = 0; i < 4000; i++) {
+        int amplitude = 20000;
+        if (i < 1000) amplitude = amplitude * i / 1000;
+        if (i > 3000) amplitude = amplitude * (4000 - i) / 1000;
+        buf[i] = (short) (Math.sin(440 * i * 6.28 / 8000.0) * amplitude);
+      }
+      audioTrack.write(buf, 0, 4000);
     }
-    audioTrack.write(buf, 0, 4000);
     audioTrack.play();
   }
 }

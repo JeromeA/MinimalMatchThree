@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   package="c.c">
 
-  <application android:label="CandyCrush">
+  <application android:label="Match3">
     <activity
       android:name=".A"
       android:screenOrientation="portrait"
