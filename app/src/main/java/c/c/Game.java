@@ -146,7 +146,9 @@ class Game extends View {
         explosion.draw(canvas);
       }
     }
-    canvas.drawText(String.valueOf(score), width / 2, topMargin / 2, textPaint);
+    String scoreString = String.valueOf(score);
+    // Each digit of the score ir roughly 30 pixel wide.
+    canvas.drawText(scoreString, (width - scoreString.length() * 30) / 2, topMargin / 2, textPaint);
   }
 
   @Override
