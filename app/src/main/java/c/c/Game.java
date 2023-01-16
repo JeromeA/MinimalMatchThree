@@ -128,6 +128,7 @@ class Game extends View {
 
   @Override
   protected void onDraw(Canvas canvas) {
+    int explosions = 0;
     int width = getRight();
     int height = getBottom();
     cellSize = width /10;
@@ -144,11 +145,15 @@ class Game extends View {
       if (exploded[i]) {
         explosion.setBounds(leftMargin + cellSize * x, topMargin + cellSize * y, leftMargin + cellSize * (x+1), topMargin + cellSize * (y + 1));
         explosion.draw(canvas);
+        explosions++;
       }
     }
     String scoreString = String.valueOf(score);
-    // Each digit of the score ir roughly 30 pixel wide.
-    canvas.drawText(scoreString, (width - scoreString.length() * 30) / 2, topMargin / 2, textPaint);
+    // Each digit of the score ir roughly 50 pixel wide.
+    canvas.drawText(scoreString, (width - scoreString.length() * 50) / 2, topMargin / 2, textPaint);
+    if (explosions == 0 && !isValid()) {
+      canvas.drawText("Game Over!", (width - 500) / 2, height - topMargin / 2, textPaint);
+    }
   }
 
   @Override
@@ -185,6 +190,16 @@ class Game extends View {
     System.arraycopy(candies, 0, newCandies, 0, SIZE);
     swap(newCandies, position1, position2);
     return markExploded(newCandies, newExploded) > 0;
+  }
+
+  private boolean isValid() {
+    for (int i = 0; i < SIZE; i++) {
+      int x = i % WIDTH;
+      int y = i / WIDTH;
+      if (x < WIDTH - 1 && isValid(i, i + 1)) return true;
+      if (y < HEIGHT - 1 && isValid(i, i + WIDTH)) return true;
+    }
+    return false;
   }
 
   private void explode() {
