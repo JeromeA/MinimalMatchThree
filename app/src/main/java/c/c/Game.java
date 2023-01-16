@@ -1,7 +1,10 @@
 package c.c;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
@@ -9,10 +12,9 @@ import android.media.AudioTrack;
 import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.TextView;
 
-import java.util.HashSet;
 import java.util.Random;
-import java.util.Set;
 
 class Game extends View {
 
@@ -29,19 +31,22 @@ class Game extends View {
   private int leftMargin;
   private int topMargin;
   private int startPosition;
+  private int score;
   private final Handler handler;
   private final AudioTrack audioTrack;
+  private final Paint textPaint;
 
   public Game(Context context) {
     super(context);
     handler = new Handler();
+    Resources resources = getResources();
     items = new Drawable[] {
-        getResources().getDrawable(R.drawable.b, null),
-        getResources().getDrawable(R.drawable.g, null),
-        getResources().getDrawable(R.drawable.o, null),
-        getResources().getDrawable(R.drawable.r, null),
-        getResources().getDrawable(R.drawable.y, null),
-        getResources().getDrawable(R.drawable.p, null)
+        resources.getDrawable(R.drawable.b, null),
+        resources.getDrawable(R.drawable.g, null),
+        resources.getDrawable(R.drawable.o, null),
+        resources.getDrawable(R.drawable.r, null),
+        resources.getDrawable(R.drawable.y, null),
+        resources.getDrawable(R.drawable.p, null)
     };
     audioTrack = new AudioTrack.Builder()
         .setAudioAttributes(new AudioAttributes.Builder()
@@ -56,43 +61,42 @@ class Game extends View {
         .setTransferMode(AudioTrack.MODE_STATIC)
         .setBufferSizeInBytes(8000)
         .build();
-    explosion = getResources().getDrawable(R.drawable.e, null);
+    explosion = resources.getDrawable(R.drawable.e, null);
     candies = new int[SIZE];
     exploded = new boolean[SIZE];
+    textPaint = new Paint();
+    textPaint.setColor(Color.WHITE);
+    textPaint.setTextSize(100);
     fall();
-    while (markExploded(candies, exploded)) {
+    // Clear any match before the game starts.
+    while (markExploded(candies, exploded) > 0) {
       removeExploded();
       fall();
     }
+    score = 0;
   }
 
-  private static boolean markExploded(int[] candies, boolean[] exploded) {
-    boolean hasExploded = false;
+  private static int markExploded(int[] candies, boolean[] exploded) {
+    int explosions = 0;
     for (int i = 0; i < SIZE; i++) {
       int x = i % WIDTH;
       int y = i / WIDTH;
       int v = candies[i];
       if (v == 0) continue;
       if (x > 0 && x < WIDTH - 1 && candies[i-  1] == v && candies[i + 1] == v) {
-        hasExploded = true;
-        exploded[i-1] = true;
+        explosions++;
+        exploded[i - 1] = true;
         exploded[i] = true;
-        exploded[i+1] = true;
+        exploded[i + 1] = true;
       }
       if (y > 0 && y < HEIGHT - 1 && candies[i - WIDTH] == v && candies[i + WIDTH] == v) {
-        hasExploded = true;
-        exploded[i- WIDTH] = true;
+        explosions++;
+        exploded[i - WIDTH] = true;
         exploded[i] = true;
-        exploded[i+ WIDTH] = true;
+        exploded[i + WIDTH] = true;
       }
     }
-
-    Set<Integer> res = new HashSet<>();
-    for (int i = 0; i < SIZE; i++) {
-      if (exploded[i]) res.add(i);
-    }
-
-    return hasExploded;
+    return explosions;
   }
 
   private void removeExploded() {
@@ -142,6 +146,7 @@ class Game extends View {
         explosion.draw(canvas);
       }
     }
+    canvas.drawText(String.valueOf(score), width / 2, topMargin / 2, textPaint);
   }
 
   @Override
@@ -177,11 +182,13 @@ class Game extends View {
     boolean[] newExploded = new boolean[SIZE];
     System.arraycopy(candies, 0, newCandies, 0, SIZE);
     swap(newCandies, position1, position2);
-    return markExploded(newCandies, newExploded);
+    return markExploded(newCandies, newExploded) > 0;
   }
 
   private void explode() {
-    if (markExploded(candies, exploded)) {
+    int explosions = markExploded(candies, exploded);
+    if (explosions > 0) {
+      score += explosions;
       invalidate();
       playBeep();
       handler.postDelayed(() -> { removeExploded();invalidate(); }, 500);
