@@ -12,7 +12,6 @@ import android.media.AudioTrack;
 import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.TextView;
 
 import java.util.Random;
 
@@ -35,6 +34,7 @@ class Game extends View {
   private final Handler handler;
   private final AudioTrack audioTrack;
   private final Paint textPaint;
+  private boolean fallToCome;
 
   public Game(Context context) {
     super(context);
@@ -68,7 +68,7 @@ class Game extends View {
     textPaint.setColor(Color.WHITE);
     textPaint.setTextSize(100);
     fall();
-    // Clear any match before the game starts.
+    // Clear any match-3 before the game starts.
     while (markExploded(candies, exploded) > 0) {
       removeExploded();
       fall();
@@ -119,6 +119,7 @@ class Game extends View {
           candies[i - WIDTH] = 0;
         }
       }
+      fallToCome = false;
     }
 
     for (int i = 0; i < candies.length ; i++) {
@@ -128,7 +129,6 @@ class Game extends View {
 
   @Override
   protected void onDraw(Canvas canvas) {
-    int explosions = 0;
     int width = getRight();
     int height = getBottom();
     cellSize = width /10;
@@ -145,13 +145,13 @@ class Game extends View {
       if (exploded[i]) {
         explosion.setBounds(leftMargin + cellSize * x, topMargin + cellSize * y, leftMargin + cellSize * (x+1), topMargin + cellSize * (y + 1));
         explosion.draw(canvas);
-        explosions++;
       }
     }
     String scoreString = String.valueOf(score);
     // Each digit of the score ir roughly 50 pixel wide.
     canvas.drawText(scoreString, (width - scoreString.length() * 50) / 2, topMargin / 2, textPaint);
-    if (explosions == 0 && !isValid()) {
+    // It's ok not to have any valid move while there are still explosions.
+    if (!fallToCome && !isValid()) {
       canvas.drawText("Game Over!", (width - 500) / 2, height - topMargin / 2, textPaint);
     }
   }
@@ -208,6 +208,7 @@ class Game extends View {
       score += explosions;
       invalidate();
       playBeep();
+      fallToCome = true;
       handler.postDelayed(() -> { removeExploded();invalidate(); }, 500);
       handler.postDelayed(() -> { fall();invalidate(); }, 1000);
       handler.postDelayed(this::explode, 1500);
