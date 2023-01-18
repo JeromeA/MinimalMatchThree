@@ -8,6 +8,7 @@ import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.Handler;
 import android.view.MotionEvent;
@@ -48,19 +49,22 @@ class Game extends View {
         resources.getDrawable(R.drawable.y, null),
         resources.getDrawable(R.drawable.p, null)
     };
-    audioTrack = new AudioTrack.Builder()
-        .setAudioAttributes(new AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_GAME)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-            .build())
-        .setAudioFormat(new AudioFormat.Builder()
-            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-            .setSampleRate(8000)
-            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-            .build())
-        .setTransferMode(AudioTrack.MODE_STATIC)
-        .setBufferSizeInBytes(8000)
-        .build();
+
+    audioTrack = new AudioTrack(
+            new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_GAME)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build(),
+            new AudioFormat.Builder()
+                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                    .setSampleRate(8000)
+                    .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                    .build(),
+            8000,
+            AudioTrack.MODE_STATIC,
+            AudioManager.AUDIO_SESSION_ID_GENERATE
+    );
+
     explosion = resources.getDrawable(R.drawable.e, null);
     candies = new int[SIZE];
     exploded = new boolean[SIZE];
